@@ -32,7 +32,7 @@ mul:
 	srl t3, t3, 1
 	j MulLoop
 	MulReturn:
-	jr a0
+	ret
 
 div:
 	li a5, 0
@@ -57,10 +57,9 @@ div:
 	addi t2, t2, -1
 	j DivLoop
 	DivReturn:
-	jr a0
+	ret
 
 pow:
-	mv a7, a0
 	li a5, 0
 	mv t4, a4
 	mv t6, a3
@@ -68,15 +67,15 @@ pow:
 	li a5, 1
 	PowLoop:
 	beqz t4, PowRet
-	la a0, PowCont
+	mv a7, ra
 	mv a3, a5
 	mv a4, t6
-	j mul
-	PowCont:
+	call mul
+	mv ra, a7
 	addi t4, t4, -1
 	j PowLoop
 	PowRet:
-	jr a7
+	ret
 
 eq:
 	bge t6, t1, Equalize
@@ -98,9 +97,10 @@ eq:
 	EqualizeEnd:
 	add t0, t0, t5
 	mv t1, t6
-	jr a0
+	ret
 
 sine:
+	mv a0, ra
 	lb t0, 0(a1)
 	li t1, 0
 	li t3, 0
@@ -141,80 +141,58 @@ sine:
 	sub a4, a4, t6
 	mv t0, t3
 	mv a6, a4
-	la a0, Cube
 	li a4, 3
-	j pow
-	Cube:
-	la a0, Divided6
+	call pow
 	mv a3, a5
 	li a4, 6
-	j div
-	Divided6:
+	call div
 	mv a7, a5
-	la a0, LengthForCube
 	mv a3, a6
 	li a4, 3
-	j mul
-	LengthForCube:
+	call mul
 	mv t6, a5
 	mv t5, a7
 	mv a3, t0
 	mv a4, t1
 	neg t5, t5
-	la a0, Next
-	j eq
-	Next:
+	call eq
 	mv a7, a3
 	mv a6, a4
-	la a0, MaxLength
 	mv a3, t1
 	li a4, 5
-	j div
-	MaxLength:
+	call div
 	mv a3, a7
 	addi a7, a5, 1
 	ReduceLoop:
 	blt a6, a7, ReduceResult
-	la a0, Reduced
 	li a4, 10
-	j div
-	Reduced:
+	call div
 	addi a6, a6, -1
 	mv a3, a5
 	j ReduceLoop
 	ReduceResult:
-	la a0, FifthPow
 	li a4, 5
-	j pow
-	FifthPow:
-	la a0, Divided120
+	call pow
 	mv a3, a5
 	li a4, 120
-	j div
-	Divided120:
+	call div
 	mv a7, a5
-	la a0, LengthForFifth
 	mv a3, a6
 	li a4, 5
-	j mul
-	LengthForFifth:
+	call mul
 	mv t6, a5
 	mv t5, a7
-	la a0, Next2
-	j eq
-	Next2:
+	call eq
 	mv t6, t1
 	ToString:
-	beqz t0, ToStringEnd
+	beqz t0, Result
 	mv a3, t0
 	li t4, 0
 	li a4, 10
 	CountDigitLoop:
 	beqz a3, CountDigitEnd
-	la a0, Division10
 	addi t4, t4, 1
-	j div
-	Division10:
+	call div
  	beqz a5, CountDigitEnd
 	mv a3, a5
 	j CountDigitLoop
@@ -226,7 +204,7 @@ sine:
 	bge t6, t1, ToStringCont
 	li t3, 49
 	sb t3, 0(a2)
-	ret
+	j Result
 	ToStringCont:
 	li t3, char_offset
 	sb t3, 0(a2)
@@ -235,29 +213,14 @@ sine:
 	sb t3, 1(a2)
 	sb t3, 1(a7)
 	li t3, char_offset
-	mv t4, t6
-	sub t4, t4, t1
-	li t5, 2
-	addi t4, t4, 2
-	FillZeros:
-	beq t5, t4, FillZerosEnd
-	add a6, a2, t5
-	sb t3, 0(a6)
-	add a6, a7, t5
-	sb t3, 0(a6)
-	addi t5, t5, 1
-	j FillZeros
-	FillZerosEnd:
-	add t1, t1, t5
-	addi t1, t1, -1
-	addi t5, t5, -1
+	mv t1, t6
+	addi t1, t1, 2
 	DumpAnswer:
-	beq t1, t5, ToStringEnd
+	li t6, 2
+	beq t1, t6, Result
 	mv t0, t5
 	li a4, 10
-	la a0, DivDump
-	j div
-	DivDump:
+	call div
 	mv t5, t0
 	mv t3, a5
 	mv t0, a3
@@ -273,6 +236,6 @@ sine:
 	mv a3, t3
 	addi t1, t1, -1
 	j DumpAnswer
-	ToStringEnd:
 	Result:
+	mv ra, a0
 	ret
