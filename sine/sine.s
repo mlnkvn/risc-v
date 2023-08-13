@@ -1,10 +1,9 @@
 .globl sine
 
-default_answer = 0x312d
 char_offset = '0'
 dot = '.'
-max_cube_root = 2642246
-max_input = 461168601842738790
+max_cube_root = 2097152
+max_input = 922337203685477579
 max_fifth = 7132
 
 .section .data
@@ -139,6 +138,28 @@ sine:
 	NonZero:
 	sub t1, t1, t6
 	sub a4, a4, t6
+
+	li t0, 19
+	li t4, max_input
+	li t5, max_cube_root
+	ResizeLoop:
+	bge t3, t4, Calc
+	bge t1, t0, Calc
+	slli t3, t3, 1
+	slli t2, t3, 2
+	add t3, t3, t2
+	addi t1, t1, 1
+	bge a3, t5, J
+	li t2, 6
+	bge a4, t2, J
+	slli a3, a3, 1
+	slli t2, a3, 2
+	add a3, a3, t2
+	addi a4, a4, 1
+	J:
+	j ResizeLoop
+
+	Calc:
 	mv t0, t3
 	mv a6, a4
 	li a4, 3
