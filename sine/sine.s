@@ -4,8 +4,9 @@ char_offset = '0'
 dot = '.'
 max_cube_root = 2097152
 max_input = 922337203685477579
-max_fifth = 7132
-
+max_fifth = 6208
+max_seventh = 512
+max_nineth = 128
 .section .data
 var:
 .align 8
@@ -77,25 +78,28 @@ pow:
 	ret
 
 eq:
-	bge t6, t1, Equalize
-	mv t2, t0
-	mv t0, t5
-	mv t5, t2
-	mv t2, t1
-	mv t1, t6
-	mv t6, t2
+	EqLoop:
+	blt t6, t1, Equalize
+	beq t6, t1, Equalize
+	mv a3, t5
+	li a4, 10
+	mv a7, ra
+	call div
+	mv ra, a7
+	mv t5, a5
+	addi t6, t6, -1
+	j EqLoop
 	Equalize:
-	sub t2, t6, t1
+	sub t2, t1, t6
 	EqualizeLoop:
 	beqz t2, EqualizeEnd
-	slli t0, t0, 1
-	slli t3, t0, 2
-	add t0, t0, t3
+	slli t5, t5, 1
+	slli t3, t5, 2
+	add t5, t5, t3
 	addi t2, t2, -1
 	j EqualizeLoop
 	EqualizeEnd:
-	add t0, t0, t5
-	mv t1, t6
+	mv t6, t1
 	ret
 
 sine:
@@ -160,6 +164,9 @@ sine:
 	j ResizeLoop
 
 	Calc:
+	la t0, var
+	sd t3, 0(t0)
+	sw t1, 8(t0)
 	mv t0, t3
 	mv a6, a4
 	li a4, 3
@@ -175,17 +182,20 @@ sine:
 	mv t5, a7
 	mv a3, t0
 	mv a4, t1
-	neg t5, t5
+	#neg t5, t5
 	call eq
+	sub t0, t0, t5
 	mv a7, a3
 	mv a6, a4
 	mv a3, t1
 	li a4, 5
 	call div
 	mv a3, a7
-	addi a7, a5, 1
+	#addi a7, a5, 1
+	li a7, max_fifth
 	ReduceLoop:
-	blt a6, a7, ReduceResult
+	#blt a6, a7, ReduceResult
+	bge a7, a3, ReduceResult
 	li a4, 10
 	call div
 	addi a6, a6, -1
@@ -204,6 +214,73 @@ sine:
 	mv t6, a5
 	mv t5, a7
 	call eq
+	add t0, t0, t5
+
+	la a7, var
+	lw a6, 8(a7)
+	ld a7, 0(a7)
+	mv a3, t1   #t1 != a6???
+	li a4, 7
+	call div
+	mv a3, a7
+	#addi a7, a5, 1
+	li a7, max_seventh
+	ReduceLoop7:
+	#blt a6, a7, ReduceResult7
+	bge a7, a3, ReduceResult7
+	li a4, 10
+	call div
+	addi a6, a6, -1
+	mv a3, a5
+	j ReduceLoop7
+	ReduceResult7:
+	li a4, 7
+	call pow
+	mv a3, a5
+	li a4, 5040
+	call div
+	mv a7, a5
+	mv a3, a6
+	li a4, 7
+	call mul
+	mv t6, a5
+	mv t5, a7
+	call eq
+	sub t0, t0, t5
+
+	la a7, var
+	lw a6, 8(a7)
+	ld a7, 0(a7)
+	mv a3, t1   #t1 != a6???
+	li a4, 9
+	call div
+	mv a3, a7
+	#addi a7, a5, 1
+	li a7, max_nineth
+	ReduceLoop9:
+	#blt a6, a7, ReduceResult9
+	bge a7, a3, ReduceResult9
+	li a4, 10
+	call div
+	addi a6, a6, -1
+	mv a3, a5
+	j ReduceLoop9
+	ReduceResult9:
+	li a4, 9
+	call pow
+	mv a3, a5
+	li a4, 362880
+	call div
+	mv a7, a5
+	mv a3, a6
+	li a4, 9
+	call mul
+	mv t6, a5
+	mv t5, a7
+	call eq
+	add t0, t0, t5
+
+
 	mv t6, t1
 	ToString:
 	beqz t0, Result
