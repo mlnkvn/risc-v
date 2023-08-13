@@ -2,11 +2,16 @@
 
 char_offset = '0'
 dot = '.'
-max_cube_root = 2097152
+max_cube_root = 2097153
 max_input = 922337203685477579
 max_fifth = 6208
 max_seventh = 512
 max_nineth = 128
+max11 = 53
+max13 = 29
+max15 = 19
+max17 = 13
+max19 = 10
 .section .data
 var:
 .align 8
@@ -79,16 +84,26 @@ pow:
 
 eq:
 	EqLoop:
-	blt t6, t1, Equalize
-	beq t6, t1, Equalize
+	blt t6, t1, Check
+	beq t6, t1, Check
 	mv a3, t5
 	li a4, 10
 	mv a7, ra
 	call div
 	mv ra, a7
+	mv a7, a5
+	slli a7, a7, 1
+	slli t5, a7, 2
+	add t5, t5, a7
+	sub a4, a3, t5
+	mv a7, t5
 	mv t5, a5
 	addi t6, t6, -1
 	j EqLoop
+	Check:
+	li a3, 5
+	blt a4, a3, Equalize
+	addi t5, t5, 1
 	Equalize:
 	sub t2, t1, t6
 	EqualizeLoop:
@@ -108,7 +123,6 @@ sine:
 	li t1, 0
 	li t3, 0
 	li a6, dot
-	li a5, max_cube_root
 	Loop:
 	beqz t0, End
 	li t2, 10
@@ -125,9 +139,6 @@ sine:
 	slli t3, t3, 3
 	add t3, t3, t5
 	add t3, t3, t4
-	bge t3, a5, Cont
-	mv  a3, t3
-	mv  a4, t1
 	Cont:
 	mv t2, a1
 	add t2, t2, t1
@@ -141,25 +152,13 @@ sine:
 	j Result
 	NonZero:
 	sub t1, t1, t6
-	sub a4, a4, t6
-
-	li t0, 19
 	li t4, max_input
-	li t5, max_cube_root
 	ResizeLoop:
 	bge t3, t4, Calc
-	bge t1, t0, Calc
 	slli t3, t3, 1
 	slli t2, t3, 2
 	add t3, t3, t2
 	addi t1, t1, 1
-	bge a3, t5, J
-	li t2, 6
-	bge a4, t2, J
-	slli a3, a3, 1
-	slli t2, a3, 2
-	add a3, a3, t2
-	addi a4, a4, 1
 	J:
 	j ResizeLoop
 
@@ -168,7 +167,27 @@ sine:
 	sd t3, 0(t0)
 	sw t1, 8(t0)
 	mv t0, t3
-	mv a6, a4
+
+	mv a6, t1
+	mv a3, t0
+	li a7, max_cube_root
+	ReduceLoop3:
+	bge a7, a3, ReduceResult3
+	li a4, 10
+	call div
+	mv a4, a5
+	slli a4, a4, 1
+	slli t2, a4, 2
+	add a4, a4, t2
+	sub t4, a3, a4
+	addi a6, a6, -1
+	mv a3, a5
+	j ReduceLoop3
+	ReduceResult3:
+	li t2, 5
+	blt t4, t2, NoCarry3
+	addi a3, a3, 1
+	NoCarry3:
 	li a4, 3
 	call pow
 	mv a3, a5
@@ -180,28 +199,31 @@ sine:
 	call mul
 	mv t6, a5
 	mv t5, a7
-	mv a3, t0
-	mv a4, t1
-	#neg t5, t5
 	call eq
 	sub t0, t0, t5
-	mv a7, a3
-	mv a6, a4
-	mv a3, t1
-	li a4, 5
-	call div
+
+	la a7, var
+	lw a6, 8(a7)
+	ld a7, 0(a7)
 	mv a3, a7
-	#addi a7, a5, 1
 	li a7, max_fifth
 	ReduceLoop:
-	#blt a6, a7, ReduceResult
 	bge a7, a3, ReduceResult
 	li a4, 10
 	call div
+	mv a4, a5
+	slli a4, a4, 1
+	slli t2, a4, 2
+	add a4, a4, t2
+	sub t4, a3, a4
 	addi a6, a6, -1
 	mv a3, a5
 	j ReduceLoop
 	ReduceResult:
+	li t2, 5
+	blt t4, t2, NoCarry5
+	addi a3, a3, 1
+	NoCarry5:
 	li a4, 5
 	call pow
 	mv a3, a5
@@ -219,21 +241,25 @@ sine:
 	la a7, var
 	lw a6, 8(a7)
 	ld a7, 0(a7)
-	mv a3, t1   #t1 != a6???
-	li a4, 7
-	call div
 	mv a3, a7
-	#addi a7, a5, 1
 	li a7, max_seventh
 	ReduceLoop7:
-	#blt a6, a7, ReduceResult7
 	bge a7, a3, ReduceResult7
 	li a4, 10
 	call div
+	mv a4, a5
+	slli a4, a4, 1
+	slli t2, a4, 2
+	add a4, a4, t2
+	sub t4, a3, a4
 	addi a6, a6, -1
 	mv a3, a5
 	j ReduceLoop7
 	ReduceResult7:
+	li t2, 5
+	blt t4, t2, NoCarry7
+	addi a3, a3, 1
+	NoCarry7:
 	li a4, 7
 	call pow
 	mv a3, a5
@@ -251,21 +277,25 @@ sine:
 	la a7, var
 	lw a6, 8(a7)
 	ld a7, 0(a7)
-	mv a3, t1   #t1 != a6???
-	li a4, 9
-	call div
 	mv a3, a7
-	#addi a7, a5, 1
 	li a7, max_nineth
 	ReduceLoop9:
-	#blt a6, a7, ReduceResult9
 	bge a7, a3, ReduceResult9
 	li a4, 10
 	call div
+	mv a4, a5
+	slli a4, a4, 1
+	slli t2, a4, 2
+	add a4, a4, t2
+	sub t4, a3, a4
 	addi a6, a6, -1
 	mv a3, a5
 	j ReduceLoop9
 	ReduceResult9:
+	li t2, 5
+	blt t4, t2, NoCarry9
+	addi a3, a3, 1
+	NoCarry9:
 	li a4, 9
 	call pow
 	mv a3, a5
@@ -280,6 +310,185 @@ sine:
 	call eq
 	add t0, t0, t5
 
+	la a7, var
+	lw a6, 8(a7)
+	ld a7, 0(a7)
+	mv a3, a7
+	li a7, max11
+	ReduceLoop11:
+	bge a7, a3, ReduceResult11
+	li a4, 10
+	call div
+	mv a4, a5
+	slli a4, a4, 1
+	slli t2, a4, 2
+	add a4, a4, t2
+	sub t4, a3, a4
+	addi a6, a6, -1
+	mv a3, a5
+	j ReduceLoop11
+	ReduceResult11:
+	li t2, 5
+	blt t4, t2, NoCarry11
+	addi a3, a3, 1
+	NoCarry11:
+	li a4, 11
+	call pow
+	mv a3, a5
+	li a4, 39916800
+	call div
+	mv a7, a5
+	mv a3, a6
+	li a4, 11
+	call mul
+	mv t6, a5
+	mv t5, a7
+	call eq
+	sub t0, t0, t5
+
+	la a7, var
+	lw a6, 8(a7)
+	ld a7, 0(a7)
+	mv a3, a7
+	li a7, max13
+	ReduceLoop13:
+	bge a7, a3, ReduceResult13
+	li a4, 10
+	call div
+	mv a4, a5
+	slli a4, a4, 1
+	slli t2, a4, 2
+	add a4, a4, t2
+	sub t4, a3, a4
+	addi a6, a6, -1
+	mv a3, a5
+	j ReduceLoop13
+	ReduceResult13:
+	li t2, 5
+	blt t4, t2, NoCarry13
+	addi a3, a3, 1
+	NoCarry13:
+	li a4, 13
+	call pow
+	mv a3, a5
+	li a4, 6227020800
+	call div
+	mv a7, a5
+	mv a3, a6
+	li a4, 13
+	call mul
+	mv t6, a5
+	mv t5, a7
+	call eq
+	add t0, t0, t5
+
+	la a7, var
+	lw a6, 8(a7)
+	ld a7, 0(a7)
+	mv a3, a7
+	li a7, max15
+	ReduceLoop15:
+	bge a7, a3, ReduceResult15
+	li a4, 10
+	call div
+	mv a4, a5
+	slli a4, a4, 1
+	slli t2, a4, 2
+	add a4, a4, t2
+	sub t4, a3, a4
+	addi a6, a6, -1
+	mv a3, a5
+	j ReduceLoop15
+	ReduceResult15:
+	li t2, 5
+	blt t4, t2, NoCarry15
+	addi a3, a3, 1
+	NoCarry15:
+	li a4, 15
+	call pow
+	mv a3, a5
+	li a4, 1307674368000
+	call div
+	mv a7, a5
+	mv a3, a6
+	li a4, 15
+	call mul
+	mv t6, a5
+	mv t5, a7
+	call eq
+	sub t0, t0, t5
+
+	la a7, var
+	lw a6, 8(a7)
+	ld a7, 0(a7)
+	mv a3, a7
+	li a7, max17
+	ReduceLoop17:
+	bge a7, a3, ReduceResult17
+	li a4, 10
+	call div
+	mv a4, a5
+	slli a4, a4, 1
+	slli t2, a4, 2
+	add a4, a4, t2
+	sub t4, a3, a4
+	addi a6, a6, -1
+	mv a3, a5
+	j ReduceLoop17
+	ReduceResult17:
+	li t2, 5
+	blt t4, t2, NoCarry17
+	addi a3, a3, 1
+	NoCarry17:
+	li a4, 17
+	call pow
+	mv a3, a5
+	li a4, 355687428096000
+	call div
+	mv a7, a5
+	mv a3, a6
+	li a4, 17
+	call mul
+	mv t6, a5
+	mv t5, a7
+	call eq
+	add t0, t0, t5
+
+	la a7, var
+	lw a6, 8(a7)
+	ld a7, 0(a7)
+	mv a3, a7
+	li a7, max19
+	ReduceLoop19:
+	bge a7, a3, ReduceResult19
+	li a4, 10
+	call div
+	mv a4, a5
+	slli a4, a4, 1
+	slli t2, a4, 2
+	add a4, a4, t2
+	sub t4, a3, a4
+	addi a6, a6, -1
+	mv a3, a5
+	j ReduceLoop19
+	ReduceResult19:
+	li t2, 5
+	blt t4, t2, NoCarry19
+	addi a3, a3, 1
+	NoCarry19:
+	li a4, 19
+	call pow
+	mv a3, a5
+	li a4, 121645100408832000
+	call div
+	mv a7, a5
+	mv a3, a6
+	li a4, 19
+	call mul
+	mv t6, a5
+	mv t5, a7
+	call eq
+	sub t0, t0, t5
 
 	mv t6, t1
 	ToString:
